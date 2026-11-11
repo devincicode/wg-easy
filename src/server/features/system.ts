@@ -20,6 +20,7 @@ export async function information() {
     insecure: WG_ENV.INSECURE,
     isAwg: WG_ENV.WG_EXECUTABLE === 'awg',
     firewallEnabled: network.firewallEnabled,
+    externalClientsEnabled: !!WG_ENV.ECFK,
   };
 }
 

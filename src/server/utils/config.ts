@@ -138,7 +138,32 @@ export const WG_ENV = {
   DISABLE_PASSWORD_AUTH: process.env.DISABLE_PASSWORD_AUTH === 'true',
   /** Proxies allowed to provide forwarded request information */
   TRUSTED_PROXIES: parseTrustedProxies(process.env.TRUSTED_PROXIES),
+  /** Keycloak group to sync clients from, if fully configured */
+  ECFK: parseEcfk(),
 };
+
+function parseEcfk() {
+  const config = {
+    server: process.env.ECFK_SERVER?.replace(/\/+$/, ''),
+    clientId: process.env.ECFK_CLIENT_ID,
+    clientSecret: process.env.ECFK_CLIENT_SECRET,
+    targetGroup: process.env.ECFK_TARGET_GROUP,
+  };
+  if (!Object.values(config).every(Boolean)) {
+    return null;
+  }
+  // The admin API lives at `<base>/admin/realms/<realm>`.
+  const match = /^(.+)\/realms\/([^/]+)$/.exec(config.server!);
+  if (!match) {
+    throw new Error(
+      'ECFK_SERVER must be the realm URL, e.g. https://keycloak.example.com/realms/<realm>'
+    );
+  }
+  return {
+    ...(config as { [K in keyof typeof config]: string }),
+    adminUrl: `${match[1]}/admin/realms/${match[2]}`,
+  };
+}
 
 if (WG_ENV.OAUTH_PROVIDERS && WG_ENV.OAUTH_PROVIDERS.length > 0) {
   SERVER_DEBUG(`

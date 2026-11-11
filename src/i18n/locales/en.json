@@ -151,6 +151,10 @@
       "success": "Client created",
       "title": "New Client"
     },
+    "syncExternal": {
+      "title": "Sync External Clients",
+      "success": "Created {created}, removed {removed}, enabled {enabled}, disabled {disabled}"
+    },
     "fields": {
       "name": {
         "label": "Name"

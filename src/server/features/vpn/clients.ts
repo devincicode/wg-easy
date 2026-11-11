@@ -19,6 +19,7 @@ import type {
   UpdateClientType,
 } from '#shared/contracts/client';
 import type { UserConfigType } from '#db/repositories/userConfig/types';
+import type { Repositories } from '#db/store';
 import { nextIP } from '#server/utils/ip';
 
 type ClientAction =
@@ -49,27 +50,34 @@ export async function create(actor: Actor, data: ClientCreateType) {
   const publicKey = await wg.getPublicKey(privateKey);
   return commit(async (tx) => {
     assertClientEnabled(true, data.expiresAt);
-    const network = await tx.interfaces.get();
-    const config = await tx.userConfigs.get();
-    const clients = await tx.clients.getAll();
-    const preSharedKey = config.defaultGeneratePreSharedKey
-      ? await wg.generatePreSharedKey()
-      : null;
-    const [created] = await tx.clients.insert({
-      ...clientDefaults(config),
-      ...data,
-      // Preserve existing ownership until user assignment is introduced.
-      userId: 1,
-      interfaceId: network.name,
-      privateKey,
-      publicKey,
-      preSharedKey: preSharedKey || null,
-      ipv4Address: nextIP(parseCidr(network.ipv4Cidr), clients),
-      ipv6Address: nextIP(parseCidr(network.ipv6Cidr), clients),
-      enabled: true,
-    });
-    return created!.clientId;
+    return insertClient(tx, data, { privateKey, publicKey });
   });
+}
+
+export async function insertClient(
+  tx: Repositories,
+  data: ClientCreateType,
+  keys: { privateKey: string; publicKey: string }
+) {
+  const network = await tx.interfaces.get();
+  const config = await tx.userConfigs.get();
+  const clients = await tx.clients.getAll();
+  const preSharedKey = config.defaultGeneratePreSharedKey
+    ? await wg.generatePreSharedKey()
+    : null;
+  const [created] = await tx.clients.insert({
+    ...clientDefaults(config),
+    ...data,
+    // Preserve existing ownership until user assignment is introduced.
+    userId: 1,
+    interfaceId: network.name,
+    ...keys,
+    preSharedKey: preSharedKey || null,
+    ipv4Address: nextIP(parseCidr(network.ipv4Cidr), clients),
+    ipv6Address: nextIP(parseCidr(network.ipv6Cidr), clients),
+    enabled: true,
+  });
+  return created!.clientId;
 }
 
 export async function update(

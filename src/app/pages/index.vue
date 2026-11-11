@@ -27,6 +27,10 @@
       <div class="flex flex-wrap gap-3">
         <ClientsSearch class="w-full sm:min-w-0 sm:flex-1" />
         <ClientsNew trigger-class="w-full sm:w-auto" />
+        <ClientsSyncExternal
+          v-if="globalStore.information?.externalClientsEnabled"
+          trigger-class="w-full sm:w-auto"
+        />
       </div>
       <ClientsFilters class="mt-4 border-t border-line pt-4" />
     </div>
