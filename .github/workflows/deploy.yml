@@ -14,7 +14,7 @@ jobs:
     name: Build Docker
     runs-on: ${{ matrix.arch.os }}
     if: |
-      github.repository_owner == 'wg-easy' &&
+      github.repository_owner == 'devincicode' &&
       startsWith(github.ref, 'refs/tags/v')
     permissions:
       packages: write
@@ -41,7 +41,7 @@ jobs:
         uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6
         with:
           images: |
-            ghcr.io/wg-easy/wg-easy
+            ghcr.io/devincicode/wg-easy
           flavor: |
             latest=false
 
@@ -65,7 +65,7 @@ jobs:
           context: .
           platforms: ${{ matrix.arch.platform }}
           labels: ${{ steps.meta.outputs.labels }}
-          tags: ghcr.io/wg-easy/wg-easy
+          tags: ghcr.io/devincicode/wg-easy
           outputs: type=image,push-by-digest=true,name-canonical=true,push=true
           cache-from: type=gha,scope=build-${{ env.PLATFORM_PAIR }}
           cache-to: type=gha,mode=min,scope=build-${{ env.PLATFORM_PAIR }}
@@ -88,7 +88,7 @@ jobs:
     name: Merge & Deploy Docker
     runs-on: ubuntu-latest
     if: |
-      github.repository_owner == 'wg-easy' &&
+      github.repository_owner == 'devincicode' &&
       startsWith(github.ref, 'refs/tags/v')
     permissions:
       packages: write
@@ -108,13 +108,6 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Login to Codeberg
-        uses: docker/login-action@8aa5831fb8d48d8f76594c7ddde61ae58019f550 # v4
-        with:
-          registry: codeberg.org
-          username: ${{ secrets.CODEBERG_USER }}
-          password: ${{ secrets.CODEBERG_PASS }}
-
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4
 
@@ -123,8 +116,7 @@ jobs:
         uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6
         with:
           images: |
-            ghcr.io/wg-easy/wg-easy
-            codeberg.org/wg-easy/wg-easy
+            ghcr.io/devincicode/wg-easy
           flavor: |
             latest=false
           tags: |
@@ -138,7 +130,7 @@ jobs:
           n=3
           for i in $(seq 1 $n); do
             docker buildx imagetools create $(jq -cr '.tags | map("-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
-              $(printf 'ghcr.io/wg-easy/wg-easy@sha256:%s ' *) && break
+              $(printf 'ghcr.io/devincicode/wg-easy@sha256:%s ' *) && break
 
             [ "$i" = "$n" ] && exit 1
             sleep 10
@@ -146,7 +138,7 @@ jobs:
 
       - name: Inspect image
         run: |
-          docker buildx imagetools inspect ghcr.io/wg-easy/wg-easy:${{ steps.meta.outputs.version }}
+          docker buildx imagetools inspect ghcr.io/devincicode/wg-easy:${{ steps.meta.outputs.version }}
 
   docs:
     name: Build & Deploy Docs
